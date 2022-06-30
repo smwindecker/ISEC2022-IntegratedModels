@@ -12,6 +12,8 @@ library(raster)
 tree_cover <- readRDS('data/nveg_ras.rds')
 
 # extract center and scale for full region
+# this is key! you need to apply the same center
+# and scaling to future extractions of the raster.
 tree_cover_scaled <- scale(getValues(tree_cover))
 scale <- attr(tree_cover_scaled, 'scaled:scale')
 center <- attr(tree_cover_scaled, 'scaled:center')
@@ -55,7 +57,7 @@ tree_cover_counts <- as.vector(scale(
 scat_det <- read.csv('data/scat_det.csv')
 scat_det_sp  <- SpatialPoints(scat_det[, c('lon', 'lat')])
 
-# scat search radius 10m
+# scat search radius 10m to sqkm
 area_scat_det <- (pi * 10 ^ 2) / 1e6
 
 tree_cover_scat_det <- as.vector(scale(
@@ -103,7 +105,8 @@ cat("
 model {
 
   ## Priors ##
-
+  # nb. these have not been thought about at all! They are generic. 
+  
   # Priors for abundance of possums
   alpha ~ dnorm(0, 0.1)
 
@@ -182,7 +185,7 @@ out <- jagsUI::jags(data = win.data, inits = NULL,
 # saveRDS(out, "jags_mod.rds")
 # out <- readRDS('jags_mod.rds')
 
-#' prediction
+#' prediction map
 pred_map <- tree_cover
 values(pred_map) <- as.vector(out$mean$lambda_pred)
 pred_map <- mask(pred_map, tree_cover)
